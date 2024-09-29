@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace FunctionAppCloudSemester4
 {
+
     internal class UploadFile
     {
         public static class UploadFile1
