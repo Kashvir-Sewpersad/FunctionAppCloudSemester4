@@ -1,0 +1,40 @@
+﻿using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
+using Azure.Data.Tables;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+namespace FunctionAppCloudSemester4
+{
+    internal class StoreTableInfo
+    {
+        public static class StoreTableInfo1
+        {
+            [Function("StoreTableInfo")]
+            public static async Task<IActionResult> Run(
+                [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+                ILogger log)
+            {
+                string tableName = req.Query["tableName"];
+                string partitionKey = req.Query["partitionKey"];
+                string rowKey = req.Query["rowKey"];
+                string data = req.Query["data"];
+
+                if (string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(partitionKey) || string.IsNullOrEmpty(rowKey) || string.IsNullOrEmpty(data))
+                {
+                    return new BadRequestObjectResult("Table name, partition key, row key, and data must be provided.");
+                }
+
+                var connectionString = Environment.GetEnvironmentVariable("AzureStorage:ConnectionString");
+                var serviceClient = new TableServiceClient(connectionString);
+                var tableClient = serviceClient.GetTableClient(tableName);
+                await tableClient.CreateIfNotExistsAsync();
+
+                var entity = new TableEntity(partitionKey, rowKey) { ["Data"] = data };
+                await tableClient.AddEntityAsync(entity);
+
+                return new OkObjectResult("Data added to table");
+            }
+        }
+    }
+}
+
